@@ -445,13 +445,27 @@ function showErr(msg){
 }
 
 // ── SESSION ──────────────────────────────────────────────────
+// Init auth
+sb.auth.onAuthStateChange(async(event, session)=>{
+  document.getElementById('loading-screen').style.display='none';
+  const u = session?.user || (session?.access_token ? {id:session.id||session.user?.id, email:session.email||session.user?.email} : null);
+  if(u && u.id){
+    USER = u;
+    await loadUserData();
+    showApp();
+  } else {
+    USER = null;
+    showAuth();
+  }
+});
+
 // Fallback timeout so loading never hangs
 setTimeout(()=>{
   if(document.getElementById('loading-screen').style.display!=='none'){
     document.getElementById('loading-screen').style.display='none';
     showAuth();
   }
-}, 5000);
+}, 3000);
 
 async function handleSignOut(){
   await sb.auth.signOut();
