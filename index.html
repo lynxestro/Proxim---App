@@ -337,13 +337,12 @@ const sb = {
         if(this._order) url += '&order='+this._order;
         return url;
       },
-      async then(resolve) {
+      async get() {
         const url = await this._buildUrl();
         const r = await fetch(url, {headers:{...(_headers(token)), 'Prefer': this._single?'return=representation':''}});
         const d = await r.json();
-        if(this._single) resolve({data:Array.isArray(d)?d[0]:d, error:null});
-        else resolve({data:d, error:null});
-        return this;
+        if(this._single) return {data:Array.isArray(d)?d[0]:d, error:null};
+        return {data:d, error:null};
       },
       async upsert(body) {
         const r = await fetch(SUPA_URL+'/rest/v1/'+table, {
@@ -486,7 +485,7 @@ async function loadUserData(){
   }
 
   // Load today's data from Supabase
-  const {data:daysData} = await sb.from('days').select('*').eq('user_id',USER.id);
+  const {data:daysData} = await sb.from('days').select('*').eq('user_id',USER.id).get();
   if(daysData){
     S.days = {};
     daysData.forEach(d=>{
@@ -496,11 +495,11 @@ async function loadUserData(){
   if(!S.days[TODAY]) S.days[TODAY]={dm:0,call:0,dmTaps:[],callTaps:[],leads:0,qualified:0};
 
   // Load qual leads
-  const {data:leadsData} = await sb.from('qual_leads').select('*').eq('user_id',USER.id).order('created_at',{ascending:false});
+  const {data:leadsData} = await sb.from('qual_leads').select('*').eq('user_id',USER.id).order('created_at',{ascending:false}).get();
   if(leadsData) S.qualLeads = leadsData.map(l=>({...l.data,_id:l.id}));
 
   // Load profile for avatar
-  const {data:profile} = await sb.from('profiles').select('username').eq('id',USER.id).single();
+  const {data:profile} = await sb.from('profiles').select('username').eq('id',USER.id).single().get();
   const name = profile?.username || USER.email?.split('@')[0] || '?';
   document.getElementById('avatar-btn').textContent = name.charAt(0).toUpperCase();
   document.getElementById('sheet-name').textContent = name;
